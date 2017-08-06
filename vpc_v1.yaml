@@ -20,9 +20,9 @@ Resources:
     Type: "AWS::EC2::Subnet"
     Properties:
       CidrBlock: !Ref Subnet1CidrBlock
-      AvailabilityZone:
-        Fn::Select:
-          - 0
-          - Fn::GetAZs: ""
+      AvailabilityZone: !Select [0, !GetAZs]
+#        Fn::Select:
+#          - 0
+#          - Fn::GetAZs: ""
           
 
