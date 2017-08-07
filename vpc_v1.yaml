@@ -1,3 +1,6 @@
+Description:
+  This template creates one VPC and two subnets. Each subnet belongs to one AvailabilityZone.
+
 Parameters:
   VpcCidrBlock:
     Type: String
