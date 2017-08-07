@@ -1,0 +1,54 @@
+Description:
+  This template creates one VPC and two subnets. Each subnet belongs to one AvailabilityZone.
+  It also creates an InternetGateway and attaches is to the VPC.
+
+Parameters:
+  VpcCidrBlock:
+    Type: String
+    Default: "10.100.0.0/16"
+    Description: "Input the VPC CIDR Block"
+
+  Subnet1CidrBlock:
+    Type: String
+    Default: "10.100.1.0/24"
+    Description: "Subnet 1 CIDR Block"
+
+  Subnet2CidrBlock:
+    Type: String
+    Default: "10.100.2.0/24"
+    Description: "Subnet 2 CIDR Block"
+
+
+Resources:
+  GabiVPC:
+    Type: "AWS::EC2::VPC"
+    Properties:
+      CidrBlock: !Ref VpcCidrBlock
+
+  MyInternetGateway:
+    Type: "AWS::EC2::InternetGateway"
+
+  #Connect the VPC and the InternetGateway
+
+  IntGw2VPCconnection:
+    Type: "AWS::EC2::VPCGatewayAttachment"
+    Properties:
+      InternetGatewayId: !Ref MyInternetGateway
+      VpcId: !Ref GabiVPC
+
+  Subnet1:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref GabiVPC
+      CidrBlock: !Ref Subnet1CidrBlock
+      AvailabilityZone: !Select [0, !GetAZs ]
+#        Fn::Select:
+#          - 0
+#          - Fn::GetAZs: ""
+
+  Subnet2:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref GabiVPC
+      CidrBlock: !Ref Subnet2CidrBlock
+      AvailabilityZone: !Select [1, !GetAZs ]
