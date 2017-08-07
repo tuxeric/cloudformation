@@ -24,6 +24,7 @@ Resources:
   Subnet1:
     Type: "AWS::EC2::Subnet"
     Properties:
+      VpcId: !Ref GabiVPC
       CidrBlock: !Ref Subnet1CidrBlock
       AvailabilityZone: !Select [0, !GetAZs ]
 #        Fn::Select:
@@ -33,5 +34,6 @@ Resources:
   Subnet2:
     Type: "AWS::EC2::Subnet"
     Properties:
+      VpcId: !Ref GabiVPC
       CidrBlock: !Ref Subnet2CidrBlock
       AvailabilityZone: !Select [1, !GetAZs ]
