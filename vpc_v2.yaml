@@ -41,6 +41,7 @@ Resources:
     Properties:
       VpcId: !Ref GabiVPC
       CidrBlock: !Ref Subnet1CidrBlock
+      MapPublicIpOnLaunch: True
       AvailabilityZone: !Select [0, !GetAZs ]
 #        Fn::Select:
 #          - 0
@@ -51,4 +52,5 @@ Resources:
     Properties:
       VpcId: !Ref GabiVPC
       CidrBlock: !Ref Subnet2CidrBlock
+      MapPublicIpOnLaunch: True
       AvailabilityZone: !Select [1, !GetAZs ]
