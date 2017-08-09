@@ -2,7 +2,7 @@ Description:
   This template creates one VPC and two subnets. Each subnet belongs to one AvailabilityZone. (v1)
   It also creates an InternetGateway and attaches is to the VPC. (v2)
   Also creates a route table, than a route (0.0.0.0/0) pointing at the InternetGateway. In the end associates the subnets to the route table (v3)
-  Adding an Instance in the first subnet. Creating a SG allowing SSH from 0/0. Assign SG to previous Instance(v4)
+  Adding an Instance in the first subnet. Creating a SG allowing SSH from 0/0. Assign SG to previous Instance (v4)
 
 Parameters:
   VpcCidrBlock:
@@ -90,4 +90,15 @@ Resources:
           CidrIP: "0.0.0.0/0"
           FromPort: 22
           ToPort: 22
+
+  Instance01:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      AvailabilityZone: !Select [ 0, !GetAZs ]
+      SubnetId: !Ref Subnet1
+      ImageId: "ami-a4c7edb2"
+      InstanceType: "t2.micro"
+      KeyName: "gabi-nvirginia"
+      SecurityGroupIds:
+        - !Ref Instance01SG
 
