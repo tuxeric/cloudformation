@@ -106,7 +106,8 @@ Resources:
         - !Ref Instance01SG
       UserData:
         Fn::Base64: |
-          echo "dadada" > /gabi
+          #!/bin/bash
+          /bin/echo "dadada" > /gabi
       BlockDeviceMappings:
         - DeviceName: "/dev/xvda"
           Ebs:
