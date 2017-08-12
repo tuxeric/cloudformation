@@ -1,0 +1,114 @@
+Description:
+  This template creates one VPC and two subnets. Each subnet belongs to one AvailabilityZone. (v1)
+  It also creates an InternetGateway and attaches is to the VPC. (v2)
+  Also creates a route table, than a route (0.0.0.0/0) pointing at the InternetGateway. In the end associates the subnets to the route table (v3)
+  Adding an Instance in the first subnet. Creating a SG allowing SSH from 0/0. Assign SG to previous Instance (v4)
+  Adding UserData and changing ROOT Volume /dev/xvda (v5)
+  
+Parameters:
+  VpcCidrBlock:
+    Type: String
+    Default: "10.100.0.0/16"
+    Description: "Input the VPC CIDR Block"
+
+  Subnet1CidrBlock:
+    Type: String
+    Default: "10.100.1.0/24"
+    Description: "Subnet 1 CIDR Block"
+
+  Subnet2CidrBlock:
+    Type: String
+    Default: "10.100.2.0/24"
+    Description: "Subnet 2 CIDR Block"
+
+Resources:
+  GabiVPC:
+    Type: "AWS::EC2::VPC"
+    Properties:
+      CidrBlock: !Ref VpcCidrBlock
+
+  MyInternetGateway:
+    Type: "AWS::EC2::InternetGateway"
+    # Create the InternetGateway
+
+  IntGw2VPCconnection:
+    Type: "AWS::EC2::VPCGatewayAttachment"
+    Properties:
+      InternetGatewayId: !Ref MyInternetGateway
+      VpcId: !Ref GabiVPC
+      # Connect the VPC and the InternetGateway
+
+  Subnet1:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref GabiVPC
+      CidrBlock: !Ref Subnet1CidrBlock
+      MapPublicIpOnLaunch: True
+      AvailabilityZone: !Select [0, !GetAZs ]
+#        Fn::Select:
+#          - 0
+#          - Fn::GetAZs: ""
+
+  Subnet2:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref GabiVPC
+      CidrBlock: !Ref Subnet2CidrBlock
+      MapPublicIpOnLaunch: True
+      AvailabilityZone: !Select [1, !GetAZs ]
+
+  MyRouteTable:
+    Type: "AWS::EC2::RouteTable"
+    Properties:
+      VpcId: !Ref GabiVPC
+
+  MyDefaultRoute:
+    Type: "AWS::EC2::Route"
+    Properties:
+      DestinationCidrBlock: "0.0.0.0/0"
+      GatewayId: !Ref MyInternetGateway
+      RouteTableId: !Ref MyRouteTable
+
+  Subnet1RouteTblAssoc:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      RouteTableId: !Ref MyRouteTable
+      SubnetId: !Ref Subnet1
+
+  Subnet2RouteTblAssoc:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      RouteTableId: !Ref MyRouteTable
+      SubnetId: !Ref Subnet2
+
+  Instance01SG:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: "Allows SSH from everywhere"
+      VpcId: !Ref GabiVPC
+      SecurityGroupIngress:
+        - IpProtocol: "tcp"
+          CidrIp: "0.0.0.0/0"
+          FromPort: 22
+          ToPort: 22
+
+  Instance01:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      AvailabilityZone: !Select [ 0, !GetAZs ]
+      SubnetId: !Ref Subnet1
+      ImageId: "ami-a4c7edb2"
+      InstanceType: "t2.micro"
+      KeyName: "gabi-nvirginia"
+      SecurityGroupIds:
+        - !Ref Instance01SG
+      UserData:
+        Fn::Base64: |
+          echo "dadada" > /gabi
+      BlockDeviceMappings:
+        - DeviceName: "/dev/xvda"
+          EBS:
+            VolumeType: "gp2"
+            VolumeSize: "20"
+
+
