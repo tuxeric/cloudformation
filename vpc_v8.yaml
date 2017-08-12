@@ -107,7 +107,8 @@ Resources:
         - !Ref Instance01SG
       UserData:
         Fn::Base64: |
-          echo "dadada" > /gabi
+          #!/bin/bash
+          /bin/echo "dadada" > /gabi
       BlockDeviceMappings:
         - DeviceName: "/dev/xvda"
           Ebs:
@@ -131,7 +132,8 @@ Resources:
   Gabis2ndVolume:
     Type: "AWS::EC2::Volume"
     Properties:
-      AvailabilityZone: !Select [ 0, !GetAZs ]
+      #AvailabilityZone: !Select [ 0, !GetAZs ]
+      AvailabilityZone: !GetAtt Instance01.AvailabilityZone
       Size: "5"
       VolumeType: "gp2"
 
