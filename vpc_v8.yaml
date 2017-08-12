@@ -131,7 +131,7 @@ Resources:
   Gabis2ndVolue:
     Type: "AWS::EC2::Volume"
     Properties:
-      AvailabilityZone: !select [0, !GetAZs ]
+      AvailabilityZone: !Select [ 0, !GetAZs ]
       Size: "5"
       VolumeType: "gp2"
 
