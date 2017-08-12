@@ -107,7 +107,7 @@ Resources:
           echo "dadada" > /gabi
       BlockDeviceMappings:
         - DeviceName: "/dev/xvda"
-          EBS:
+          Ebs:
             VolumeType: "gp2"
             VolumeSize: "20"
 
