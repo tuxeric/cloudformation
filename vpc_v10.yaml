@@ -194,4 +194,4 @@ Resources:
         - !Ref Instance01
       Subnets:
         - !Ref LBSubnet1
-          !Ref LBSubnet2
+        - !Ref LBSubnet2
