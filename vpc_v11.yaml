@@ -9,6 +9,7 @@ Description:
   Adding a forth Volume using VolumeAttachment (v8)
   Adding Subnets for a LB (v9)
   Adding a Classic LB (_Note_ The previously added subnets have no route table association, the LB has no security group and the instance SG doesn't allow http (v10)
+  Permitting the LB subnets access in the Instance SG on port 80 - requests from LB being seen with tcpdump (v11)
   
 Parameters:
   VpcCidrBlock:
