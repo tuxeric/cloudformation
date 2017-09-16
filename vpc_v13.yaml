@@ -1,0 +1,228 @@
+Description:
+  .
+  .
+  .
+  Adding Subnets for a LB (v9)
+  Adding a Classic LB (_Note_ The previously added subnets have no route table association, the LB has no security group and the instance SG doesn't allow http (v10)
+  Permitting the LB subnets access in the Instance SG on port 80 - requests from LB being seen with tcpdump (v11)
+  Adding a route table association between the LB subnets abd our route table created at step 3 (v12)
+  Adding a new SG and associating it with the LB. Changed LB HealthCheck intervals (v13)
+  
+Parameters:
+  VpcCidrBlock:
+    Type: String
+    Default: "10.100.0.0/16"
+    Description: "Input the VPC CIDR Block"
+
+  Subnet1CidrBlock:
+    Type: String
+    Default: "10.100.1.0/24"
+    Description: "Subnet 1 CIDR Block"
+
+  Subnet2CidrBlock:
+    Type: String
+    Default: "10.100.2.0/24"
+    Description: "Subnet 2 CIDR Block"
+
+  LBsubnet1CidrBlock:
+    Type: String
+    Default: "10.100.10.0/24"
+    Description: "LoadBalancer Subnet 1 CIDR Block"
+
+  LBsubnet2CidrBlock:
+    Type: String
+    Default: "10.100.20.0/24"
+    Description: "LoadBalancer Subnet 2 CIDR Block"
+
+Resources:
+  GabiVPC:
+    Type: "AWS::EC2::VPC"
+    Properties:
+      CidrBlock: !Ref VpcCidrBlock
+
+  MyInternetGateway:
+    Type: "AWS::EC2::InternetGateway"
+    # Create the InternetGateway
+
+  IntGw2VPCconnection:
+    Type: "AWS::EC2::VPCGatewayAttachment"
+    Properties:
+      InternetGatewayId: !Ref MyInternetGateway
+      VpcId: !Ref GabiVPC
+      # Connect the VPC and the InternetGateway
+
+  Subnet1:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref GabiVPC
+      CidrBlock: !Ref Subnet1CidrBlock
+      MapPublicIpOnLaunch: True
+      AvailabilityZone: !Select [0, !GetAZs ]
+#        Fn::Select:
+#          - 0
+#          - Fn::GetAZs: ""
+
+  Subnet2:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref GabiVPC
+      CidrBlock: !Ref Subnet2CidrBlock
+      MapPublicIpOnLaunch: True
+      AvailabilityZone: !Select [1, !GetAZs ]
+
+  LBSubnet1:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref GabiVPC
+      CidrBlock: !Ref LBsubnet1CidrBlock
+      MapPublicIpOnLaunch: True
+      AvailabilityZone: !Select [0, !GetAZs ]
+
+  LBSubnet2:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref GabiVPC
+      CidrBlock: !Ref LBsubnet2CidrBlock
+      MapPublicIpOnLaunch: True
+      AvailabilityZone: !Select [1, !GetAZs ]
+  
+  MyRouteTable:
+    Type: "AWS::EC2::RouteTable"
+    Properties:
+      VpcId: !Ref GabiVPC
+
+  MyDefaultRoute:
+    Type: "AWS::EC2::Route"
+    Properties:
+      DestinationCidrBlock: "0.0.0.0/0"
+      GatewayId: !Ref MyInternetGateway
+      RouteTableId: !Ref MyRouteTable
+
+  Subnet1RouteTblAssoc:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      RouteTableId: !Ref MyRouteTable
+      SubnetId: !Ref Subnet1
+
+  Subnet2RouteTblAssoc:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      RouteTableId: !Ref MyRouteTable
+      SubnetId: !Ref Subnet2
+
+  LBSubnet1RouteTblAssoc:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      RouteTableId: !Ref MyRouteTable
+      SubnetId: !Ref LBSubnet1
+
+  LBSubnet2RouteTblAssoc:
+      Type: "AWS::EC2::SubnetRouteTableAssociation"
+      Properties:
+        RouteTableId: !Ref MyRouteTable
+        SubnetId: !Ref LBSubnet2
+
+  Instance01SG:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: "Allows SSH from everywhere"
+      VpcId: !Ref GabiVPC
+      SecurityGroupIngress:
+        - IpProtocol: "tcp"
+          CidrIp: "0.0.0.0/0"
+          FromPort: 22
+          ToPort: 22
+        - IpProtocol: "tcp"
+          CidrIp: !Ref LBsubnet1CidrBlock
+          FromPort: 80
+          ToPort: 80
+        - IpProtocol: "tcp"
+          CidrIp: !Ref LBsubnet1CidrBlock
+          FromPort: 80
+          ToPort: 80
+
+  GabisClassicLBSG:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: "Allows HTTP from everywhere"
+      VpcId: !Ref GabiVPC
+      SecurityGroupIngress:
+        - IpProtocol: "tcp"
+          CidrIp: "0.0.0.0/0"
+          FromPort: 80
+          ToPort: 80
+
+  Instance01:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      AvailabilityZone: !Select [ 0, !GetAZs ]
+      SubnetId: !Ref Subnet1
+      ImageId: "ami-a4c7edb2"
+      InstanceType: "t2.micro"
+      KeyName: "gabi-nvirginia"
+      SecurityGroupIds:
+        - !Ref Instance01SG
+      UserData:
+        Fn::Base64: |
+          #!/bin/bash
+          /bin/echo "dadada" > /gabi
+      BlockDeviceMappings:
+        - DeviceName: "/dev/xvda"
+          Ebs:
+            VolumeType: "gp2"
+            VolumeSize: "20"
+        - DeviceName: "/dev/xvdc"
+          Ebs:
+            VolumeType: "gp2"
+            VolumeSize: "10"
+      Volumes:
+        - Device: "/dev/xvdd"
+          VolumeId: !Ref GabisVolume
+
+  GabisVolume:
+    Type: "AWS::EC2::Volume"
+    Properties:
+      AvailabilityZone: !Select [ 0, !GetAZs ]
+      Size: "15"
+      VolumeType: "gp2"
+
+  Gabis2ndVolume:
+    Type: "AWS::EC2::Volume"
+    Properties:
+      #AvailabilityZone: !Select [ 0, !GetAZs ]
+      AvailabilityZone: !GetAtt Instance01.AvailabilityZone
+      Size: "5"
+      VolumeType: "gp2"
+
+  Gabis2ndVolumeAttachment:
+    Type: "AWS::EC2::VolumeAttachment"
+    Properties:
+      Device: "/dev/xvdf"
+      InstanceId: !Ref Instance01
+      VolumeId: !Ref Gabis2ndVolume
+
+  GabisClassicLB:
+    Type: "AWS::ElasticLoadBalancing::LoadBalancer"
+    Properties:
+      ConnectionDrainingPolicy:
+        Enabled: True
+        Timeout: "60"
+      CrossZone: True
+      SecurityGroups:
+        - !Ref GabisClassicLBSG
+      HealthCheck:
+        HealthyThreshold: "4"
+        Interval: "30"
+        Target: "HTTP:80/index.html"
+        Timeout: "5"
+        UnhealthyThreshold: "4"
+      Listeners:
+        - InstancePort: "80"
+          InstanceProtocol: "HTTP"
+          LoadBalancerPort: "80"
+          Protocol: "HTTP"
+      Instances:
+        - !Ref Instance01
+      Subnets:
+        - !Ref LBSubnet1
+        - !Ref LBSubnet2
